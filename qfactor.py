@@ -47,7 +47,7 @@ moving_average = lambda oneD_array, window: np.convolve(oneD_array, np.ones((win
 def lor_fit(f, background, amp, f0, linewidth):
     return background - amp/(1 + (f - f0)**2/(linewidth/2)**2)
 
-def read_and_calc_Q(folder, fname, pump_freq, freq_per_sec, truncation_factor=10):
+def read_and_calc_Q(folder, fname, pump_freq, freq_per_sec, truncation_factor=10, showplt=True):
     # read data
     time, ch1, ch2 = read_data(folder+fname, usecols=[0,1,2], names=['time', 'ch1', 'ch2'])
     trace = scale_channel(ch1, max_func=np.mean)
@@ -84,9 +84,13 @@ def read_and_calc_Q(folder, fname, pump_freq, freq_per_sec, truncation_factor=10
     ax.annotate(Q_str, (-linewidth, background), xycoords='data')
     plt.tight_layout()
     plt.savefig(folder+fname+(" Q%.0fe8"%(Q/1e8)))
-    plt.show()
+    if showplt: plt.show()
 
-def list_fnames(folder = "./"):
+def calculate_folder(folder, pump_freq, freq_per_sec):
+    for fname in list_fnames(folder):
+        read_and_calc_Q(folder, fname, pump_freq, freq_per_sec, showplt=False)
+
+def list_fnames(folder="./"):
     return [fname[:-4] for fname in os.listdir(folder) if '.csv' in fname]
 
 
@@ -104,11 +108,5 @@ if __name__ == '__main__':
     pump_freq = 3e8/wavelength/1e6 #MHz
     freq_per_sec = frequency_span_per_sec(scan_freq=1007, peak_to_peak=2, scaling=10, calibration=8.2)
 
-    # capture the data if not present
-    if not os.path.exists(folder+fname):
-        acq.get_single_trace(folder+fname, ext=_filetype, acq_type=a_type)
-
     read_and_calc_Q(folder, fname, pump_freq, freq_per_sec)
-
-    # for fname in list_fnames(folder):
-    #     read_and_calc_Q(folder, fname, pump_freq, freq_per_sec)
+    # calculate_folder(folder, pump_freq, freq_per_sec)
