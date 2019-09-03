@@ -86,6 +86,9 @@ def read_and_calc_Q(folder, fname, pump_freq, freq_per_sec, truncation_factor=10
     plt.savefig(folder+fname+(" Q%.0fe8"%(Q/1e8)))
     plt.show()
 
+def list_fnames(folder = "./"):
+    return [fname[:-4] for fname in os.listdir(folder) if '.csv' in fname]
+
 
 ## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ##
 ##                                   MAIN                                     ##
@@ -106,3 +109,6 @@ if __name__ == '__main__':
         acq.get_single_trace(folder+fname, ext=_filetype, acq_type=a_type)
 
     read_and_calc_Q(folder, fname, pump_freq, freq_per_sec)
+
+    # for fname in list_fnames(folder):
+    #     read_and_calc_Q(folder, fname, pump_freq, freq_per_sec)
