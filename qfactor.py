@@ -5,13 +5,14 @@
 Andreas Svela // 2019
 """
 
-import sys, logging
+import sys, os
 import logging; _log = logging.getLogger(__name__)
 import pandas as pd             #dataframes
 import numpy as np              #arrays
 import matplotlib.pyplot as plt #plotting
 import scipy.signal as sig
 import scipy.optimize as opt    #fitting
+# import keyoscacquire.programmes as acq
 from matplotlib import gridspec
 from datetime import datetime
 
@@ -46,35 +47,22 @@ moving_average = lambda oneD_array, window: np.convolve(oneD_array, np.ones((win
 def lor_fit(f, background, amp, f0, linewidth):
     return background - amp/(1 + (f - f0)**2/(linewidth/2)**2)
 
-
-## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ##
-##                                   MAIN                                     ##
-## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ##
-
-if __name__ == '__main__':
-
-    # folder = "T:/DATA/Microcombs/Experiments/Near-field/Code/Q-measurement/"
-    folder = "T:/DATA/Microcombs/Experiments/Near-field/Code/nearfield-control/"
-    fname = "20190830(6) 1550+75V"
-    wavelength = 1550e-9 #m
-    freq_per_sec = frequency_span_per_sec(scan_freq=1007, peak_to_peak=2, scaling=10, calibration=8.2)
-    pump_freq = 3e8/wavelength/1e6 #MHz
-
+def read_and_calc_Q(folder, fname, pump_freq, freq_per_sec, truncation_factor=10):
     # read data
     time, ch1, ch2 = read_data(folder+fname, usecols=[0,1,2], names=['time', 'ch1', 'ch2'])
-    ch1 = scale_channel(ch1, max_func=np.mean)
+    trace = scale_channel(ch1, max_func=np.mean)
     freq = time*freq_per_sec
 
     # fit the trace
     ## guess on the form (background, amp, f0, linewidth)
-    guess = (np.mean(ch1), np.max(ch1)-np.min(ch1), freq[np.argmin(ch1)], 0.5)
+    guess = (np.mean(trace), np.max(trace)-np.min(trace), freq[np.argmin(trace)], 0.5)
     bounds = ((0, 0, -np.inf, 0), (np.inf, np.inf, np.inf, np.inf))
     ## truncate the trace
-    indices = ((guess[2]-10*guess[3]) < freq) & (freq < (guess[2]+10*guess[3]))
+    indices = ((guess[2]-truncation_factor*guess[3]) < freq) & (freq < (guess[2]+truncation_factor*guess[3]))
     trunc_freq = freq[indices]
-    trunc_ch1 = ch1[indices]
+    trunc_trace = trace[indices]
     ## run fit and extract parameters
-    optp, _ = opt.curve_fit(lor_fit, trunc_freq, trunc_ch1, p0=guess, bounds=bounds)
+    optp, _ = opt.curve_fit(lor_fit, trunc_freq, trunc_trace, p0=guess, bounds=bounds)
     background, amp, f0, linewidth = optp
     fitline = lor_fit(trunc_freq, *optp)
 
@@ -85,7 +73,7 @@ if __name__ == '__main__':
 
     # plot the fit and linewidth
     ax = plt.subplot()
-    ax.plot(freq-f0, ch1)
+    ax.plot(freq-f0, trace)
     # ax.plot(freq, lor_fit(freq, *guess))
     ax.plot(trunc_freq-f0, fitline)
     ax.set_xlim([-8*linewidth, 8*linewidth])
@@ -97,3 +85,24 @@ if __name__ == '__main__':
     plt.tight_layout()
     plt.savefig(folder+fname+(" Q%.0fe8"%(Q/1e8)))
     plt.show()
+
+
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ##
+##                                   MAIN                                     ##
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ##
+
+if __name__ == '__main__':
+    # folder = "T:/DATA/Microcombs/Experiments/Near-field/Code/Q-measurement/"
+    folder = "./"
+    fname = sys.argv[1] if len(sys.argv) >= 2 else "q-meas"
+    a_type = sys.argv[2] if len(sys.argv) >= 3 else "HRES"
+
+    wavelength = 1550e-9 #m
+    pump_freq = 3e8/wavelength/1e6 #MHz
+    freq_per_sec = frequency_span_per_sec(scan_freq=1007, peak_to_peak=2, scaling=10, calibration=8.2)
+
+    # capture the data if not present
+    if not os.path.exists(folder+fname):
+        acq.get_single_trace(folder+fname, ext=_filetype, acq_type=a_type)
+
+    read_and_calc_Q(folder, fname, pump_freq, freq_per_sec)
