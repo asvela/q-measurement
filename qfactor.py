@@ -12,7 +12,7 @@ import numpy as np              #arrays
 import matplotlib.pyplot as plt #plotting
 import scipy.signal as sig
 import scipy.optimize as opt    #fitting
-# import keyoscacquire.programmes as acq
+import keyoscacquire.programmes as acq
 from matplotlib import gridspec
 from datetime import datetime
 
@@ -47,9 +47,9 @@ moving_average = lambda oneD_array, window: np.convolve(oneD_array, np.ones((win
 def lor_fit(f, background, amp, f0, linewidth):
     return background - amp/(1 + (f - f0)**2/(linewidth/2)**2)
 
-def read_and_calc_Q(folder, fname, pump_freq, freq_per_sec, truncation_factor=10, showplt=True):
+def read_and_calc_Q(folder, fname, pump_freq, freq_per_sec, subfolder="", truncation_factor=10, showplt=True):
     # read data
-    time, ch1, ch2 = read_data(folder+fname, usecols=[0,1,2], names=['time', 'ch1', 'ch2'])
+    time, ch1, ch2 = read_data(folder+subfolder+fname, usecols=[0,1,2], names=['time', 'ch1', 'ch2'])
     trace = scale_channel(ch1, max_func=np.mean)
     freq = time*freq_per_sec
 
@@ -68,8 +68,9 @@ def read_and_calc_Q(folder, fname, pump_freq, freq_per_sec, truncation_factor=10
 
     # calculate the Q
     Q = pump_freq/linewidth
-    Q_str = "Q = %.1fe8" % (Q/1e8)
-    print(Q_str)
+    print("Q = %.1fe8" % (Q/1e8))
+    Q_str = r"$Q$ = %.1f$\cdot10^8$" % (Q/1e8)
+    lw_str = r"$\gamma/2\pi$ = %.0f kHz" % (linewidth*1e3)
 
     # plot the fit and linewidth
     ax = plt.subplot()
@@ -79,15 +80,19 @@ def read_and_calc_Q(folder, fname, pump_freq, freq_per_sec, truncation_factor=10
     ax.set_xlim([-8*linewidth, 8*linewidth])
     ax.set_xlabel("Frequency offset [MHz]")
     ax.set_ylabel("Transmission")
-    ax.set_title(fname+": "+Q_str)
+    ax.set_title(fname+": "+Q_str+", "+lw_str)
     ax.hlines(y=amp/2+np.min(fitline), xmin=-linewidth/2, xmax=linewidth/2)
     ax.annotate(Q_str, (-linewidth, background), xycoords='data')
     plt.tight_layout()
-    plt.savefig(folder+fname+(" Q%.0fe8"%(Q/1e8)))
-    if showplt: plt.show()
+    plt.savefig(folder+fname+(" Q%.1fe8.png"%(Q/1e8)))
+    if showplt:
+        plt.show()
+    else:
+        plt.close()
 
 def calculate_folder(folder, pump_freq, freq_per_sec):
     for fname in list_fnames(folder):
+        print(fname, end=": ")
         read_and_calc_Q(folder, fname, pump_freq, freq_per_sec, showplt=False)
 
 def list_fnames(folder="./"):
@@ -100,13 +105,21 @@ def list_fnames(folder="./"):
 
 if __name__ == '__main__':
     # folder = "T:/DATA/Microcombs/Experiments/Near-field/Code/Q-measurement/"
-    folder = "./"
+    folder = "./"#scan speed 20Hz/"
+    subfolder = "data/"
     fname = sys.argv[1] if len(sys.argv) >= 2 else "q-meas"
     a_type = sys.argv[2] if len(sys.argv) >= 3 else "HRES"
 
     wavelength = 1550e-9 #m
     pump_freq = 3e8/wavelength/1e6 #MHz
-    freq_per_sec = frequency_span_per_sec(scan_freq=1007, peak_to_peak=2, scaling=10, calibration=8.2)
+    # scan_freq, calibration = 1007, 8.2
+    scan_freq, calibration = 20, 11.2
+    freq_per_sec = frequency_span_per_sec(scan_freq=scan_freq, peak_to_peak=2, scaling=10, calibration=calibration)
 
-    read_and_calc_Q(folder, fname, pump_freq, freq_per_sec)
+    if not os.path.exists(folder+subfolder+fname+_filetype):
+        print("Obtaining trace..")
+        acq.get_single_trace(fname=folder+subfolder+fname, acq_type=a_type)
+
+    print("Calculating Q..")
+    read_and_calc_Q(folder, fname, pump_freq, freq_per_sec, subfolder=subfolder)
     # calculate_folder(folder, pump_freq, freq_per_sec)
