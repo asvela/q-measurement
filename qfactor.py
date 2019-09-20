@@ -68,13 +68,15 @@ def read_and_calc_Q(folder, fname, pump_freq, freq_per_sec, subfolder="", trunca
 
     # calculate the Q
     Q = pump_freq/linewidth
-    print("Q = %.1fe8" % (Q/1e8))
+    Q0 = 2*Q/(1+np.sqrt(1-amp))
+    print("Q = %.1fe8, Q_0 = %.1fe8" % ((Q/1e8), (Q0/1e8)))
     Q_str = r"$Q$ = %.1f$\cdot10^8$" % (Q/1e8)
-    lw_str = r"$\gamma/2\pi$ = %.0f kHz" % (linewidth*1e3)
+    Q0_str = r"$Q_0$ = %.1f$\cdot10^8$" % (Q0/1e8)
+    lw_str = r"$2\gamma/2\pi$ = %.0f kHz" % (linewidth*1e3)
 
     # plot the fit and linewidth
     ax = plt.subplot()
-    ax.plot(freq-f0, trace)
+    ax.plot(freq-f0, trace, '.')
     # ax.plot(freq, lor_fit(freq, *guess))
     ax.plot(trunc_freq-f0, fitline)
     ax.set_xlim([-8*linewidth, 8*linewidth])
@@ -83,6 +85,7 @@ def read_and_calc_Q(folder, fname, pump_freq, freq_per_sec, subfolder="", trunca
     ax.set_title(fname+": "+Q_str+", "+lw_str)
     ax.hlines(y=amp/2+np.min(fitline), xmin=-linewidth/2, xmax=linewidth/2)
     ax.annotate(Q_str, (-linewidth, background), xycoords='data')
+    ax.annotate(Q0_str, (-linewidth, background-amp*1.05), xycoords='data')
     plt.tight_layout()
     plt.savefig(folder+fname+(" Q%.1fe8.png"%(Q/1e8)))
     if showplt:
@@ -114,6 +117,7 @@ if __name__ == '__main__':
     pump_freq = 3e8/wavelength/1e6 #MHz
     # scan_freq, calibration = 1007, 8.2
     scan_freq, calibration = 20, 11.2
+    # scan_freq, calibration = 120, 10.2
     freq_per_sec = frequency_span_per_sec(scan_freq=scan_freq, peak_to_peak=2, scaling=10, calibration=calibration)
 
     if not os.path.exists(folder+subfolder+fname+_filetype):
