@@ -158,8 +158,9 @@ def find_nearest(array, value):
 ## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ##
 
 
-folder = "T:/DATA/Microcombs/Experiments/Near-field/Code/data/Laser sweep calibration/Internal voltage sweep/"
-fnames = ["15"+str(i)+" AVER4" for i in range(53,56)]
+folder = "./data/"
+fnames = ["20190912(1) 1550.0+52.3V_opposite_trig_20Hz_mment57"]
+# fnames = ["15"+str(i)+" AVER4" for i in range(53,56)]
 
 if __name__ == '__main__':
     for fname in fnames:

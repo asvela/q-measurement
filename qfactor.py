@@ -12,9 +12,10 @@ import numpy as np              #arrays
 import matplotlib.pyplot as plt #plotting
 import scipy.signal as sig
 import scipy.optimize as opt    #fitting
-import keyoscacquire.programmes as acq
 from matplotlib import gridspec
 from datetime import datetime
+
+import keyoscacquire.programmes as acq
 
 _filetype = ".csv"
 
@@ -47,10 +48,10 @@ moving_average = lambda oneD_array, window: np.convolve(oneD_array, np.ones((win
 def lor_fit(f, background, amp, f0, linewidth):
     return background - amp/(1 + (f - f0)**2/(linewidth/2)**2)
 
-def read_and_calc_Q(folder, fname, pump_freq, freq_per_sec, subfolder="", truncation_factor=10, showplt=True):
+def read_and_calc_Q(folder, fname, pump_freq, freq_per_sec, subfolder="", truncation_factor=10, showplt=True, actual_zero=0):
     # read data
     time, ch1, ch2 = read_data(folder+subfolder+fname, usecols=[0,1,2], names=['time', 'ch1', 'ch2'])
-    trace = scale_channel(ch1, max_func=np.mean)
+    trace = scale_channel(ch1, max_func=np.mean, actual_zero=actual_zero)
     freq = time*freq_per_sec
 
     # fit the trace
@@ -93,20 +94,25 @@ def read_and_calc_Q(folder, fname, pump_freq, freq_per_sec, subfolder="", trunca
     else:
         plt.close()
 
-def calculate_folder(folder, pump_freq, freq_per_sec):
-    for fname in list_fnames(folder):
+def calculate_folder(folder, pump_freq, freq_per_sec, subfolder="", actual_zero=0):
+    for fname in list_fnames(folder+subfolder):
         print(fname, end=": ")
-        read_and_calc_Q(folder, fname, pump_freq, freq_per_sec, showplt=False)
+        read_and_calc_Q(folder, fname, pump_freq, freq_per_sec, showplt=False, subfolder=subfolder, actual_zero=actual_zero)
 
 def list_fnames(folder="./"):
     return [fname[:-4] for fname in os.listdir(folder) if '.csv' in fname]
 
+def read_zero(fname):
+    return np.mean(read_data(fname, usecols=[1], names=['ch1']))
 
 ## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ##
 ##                                   MAIN                                     ##
 ## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ##
 
 if __name__ == '__main__':
+    ch1_zero = read_zero("zero light measurement 190819 resonator 20190912(1) 1550.0+52.3V_zero")
+    print(ch1_zero)
+
     # folder = "T:/DATA/Microcombs/Experiments/Near-field/Code/Q-measurement/"
     folder = "./"#scan speed 20Hz/"
     subfolder = "data/"
@@ -125,5 +131,5 @@ if __name__ == '__main__':
         acq.get_single_trace(fname=folder+subfolder+fname, acq_type=a_type)
 
     print("Calculating Q..")
-    read_and_calc_Q(folder, fname, pump_freq, freq_per_sec, subfolder=subfolder)
-    # calculate_folder(folder, pump_freq, freq_per_sec)
+    read_and_calc_Q(folder, fname, pump_freq, freq_per_sec, subfolder=subfolder, actual_zero=ch1_zero)
+    # calculate_folder(folder, pump_freq, freq_per_sec, subfolder=subfolder, actual_zero=ch1_zero)
