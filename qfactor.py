@@ -2,7 +2,7 @@
 """
 Q-factor measurement tool and calculator
 
-Run with option -h to learn more.
+Consult README and run with option -h to learn more.
 
 Andreas Svela // 2019
 """
@@ -309,13 +309,15 @@ def main():
                               "or leave empty to acquire a trace."))
     parser.add_argument('-v', '--vacuum-filename', type=str, default=None,
                         help=("Filename of a trace with no light input on the PD, "
-                              "or leave empty to acquire one."))
+                              "or leave empty to acquire one or use the trace minimum value."))
     parser.add_argument('-c', '--frequency_calibration', type=str, default=None,
                         help=("Float giving the laser sweep rate (MHz/sec), "
-                              "or the filename of a trace with sidebands (will ask for sideband frequency later), "
-                              "or leave empty to acquire a trace with sidebands."))
+                              "or the filename of a trace with sidebands (will "
+                              " ask for sideband frequency later), or leave "
+                              "empty to acquire a trace with sidebands."))
     parser.add_argument('-f', '--folder', type=str, default="./",
-                        help="Select a folder if different from the folder where the script is exectuted")
+                        help=("Select a folder if different from the folder "
+                              "where the script is exectuted"))
     args = parser.parse_args()
     print("Hello! Let's get started with this measurement!")
     # Test if float given instead of filename for calibration
