@@ -199,12 +199,13 @@ class QFactorMeasurement:
         elif isinstance(frequency_span_per_sec, str):
             fname = frequency_span_per_sec
             print(f"Loading '{fname}' for calibrating frequency axis..")
+            fname = self.folder+fname
         else:
             print("Looks like you need to get a trace with some sidebands on it")
             fname = self.acquire(" a trace with sidebands")
         if fname:
             sidebands_freq = float(input("At what frequency are the sidebands? [MHz] "))
-            self.frequency_span_per_sec = fit_frequency_span_per_sec(self.folder+fname, sidebands_freq)
+            self.frequency_span_per_sec = fit_frequency_span_per_sec(fname, sidebands_freq)
         else:
             print(f"I could't work with the filename '{fname}', sorry")
 
@@ -213,14 +214,14 @@ class QFactorMeasurement:
         fname = input(f"When ready to acquire{specify}, type filename for the "
                        "trace (no extension)\nand enter (or 'n' to cancel):\n")
         if not fname.lower() == 'n':
-            fname = self.folder+fname
+            folder_and_fname = self.folder+fname
             # optional override of acq_type
             acq_type = self.acq_type if acq_type is None else acq_type
             if _oscilloscope_visa_address:
                 scope = oscacq.Oscilloscope(_oscilloscope_visa_address)
             else:
                 scope = oscacq.Oscilloscope()
-            scope.set_options_get_trace_save(fname, _filetype, acq_type=acq_type)
+            scope.set_options_get_trace_save(folder_and_fname, _filetype, acq_type=acq_type)
             return fname
         else:
             return False
@@ -325,6 +326,8 @@ def main():
         args.frequency_calibration = float(args.frequency_calibration)
     except (ValueError, TypeError): # VE triggered by non-permissible characters
         pass                        # TE triggered by `None`
+    if not args.folder[-1] == "/":
+        args.folder += "/"
     # Spawn class with the settings given
     qfm = QFactorMeasurement(folder=args.folder, PD_zero=args.vacuum_filename,
                              frequency_span_per_sec=args.frequency_calibration)
