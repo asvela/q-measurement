@@ -172,7 +172,7 @@ class QFactorMeasurement:
             self.PD_zero = PD_zero
             print(f"PD value for vacuum is set to {self.PD_zero*1000:.2f}mV")
         elif isinstance(PD_zero, str):
-            self.PD_zero = read_zero(PD_zero)
+            self.PD_zero = read_zero(self.folder+PD_zero)
             print(f"PD value for vacuum is set by file '{PD_zero}' to {self.PD_zero*1000:.2f}mV")
         else:
             print("Looks like you should get a vacuum trace (no light on the PD).")
@@ -204,7 +204,7 @@ class QFactorMeasurement:
             fname = self.acquire(" a trace with sidebands")
         if fname:
             sidebands_freq = float(input("At what frequency are the sidebands? [MHz] "))
-            self.frequency_span_per_sec = fit_frequency_span_per_sec(fname, sidebands_freq)
+            self.frequency_span_per_sec = fit_frequency_span_per_sec(self.folder+fname, sidebands_freq)
         else:
             print(f"I could't work with the filename '{fname}', sorry")
 
