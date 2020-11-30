@@ -24,7 +24,7 @@ Run `qfactor.py -h` to learn more about the syntax of use.
 
 The example traces in `test_traces/` can be used to test the module, running
 ```bash
-python qfactor.py -f "./test_traces/"  -v "vacuum" -c "sidebands_50MHz"  -r "resonance"
+python qfactor.py -f "./test_traces/"  -v "vacuum" -c "sidebands_100MHz"  -r "resonance"
 ```
 which will give the calibration
 
@@ -32,4 +32,4 @@ which will give the calibration
 
 and the fitted Q-factor
 
-![Q-factor plot](./test_traces/resonance_Q0.023e8.png)
+![Q-factor plot](./test_traces/resonance_Q0.100e8.png)

@@ -179,7 +179,7 @@ class QFactorMeasurement:
             print("If you don't, the minimum of the resonance trace will be used as zero.")
             acquired = self.acquire(specify=" a vacuum trace")
             if acquired:
-                self.PD_zero = read_zero(acquired)
+                self.PD_zero = read_zero(self.folder+acquired)
             else:
                 print("(!) Warning no photodiode zero is set, minimum will be used.")
                 self.PD_zero = None
@@ -199,11 +199,11 @@ class QFactorMeasurement:
         elif isinstance(frequency_span_per_sec, str):
             fname = frequency_span_per_sec
             print(f"Loading '{fname}' for calibrating frequency axis..")
-            fname = self.folder+fname
         else:
             print("Looks like you need to get a trace with some sidebands on it")
             fname = self.acquire(" a trace with sidebands")
         if fname:
+            fname = self.folder+fname
             sidebands_freq = float(input("At what frequency are the sidebands? [MHz] "))
             self.frequency_span_per_sec = fit_frequency_span_per_sec(fname, sidebands_freq)
         else:
