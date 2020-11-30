@@ -22,11 +22,14 @@ by running `path_of_config` from the command line).
 
 Run `qfactor.py -h` to learn more about the syntax of use.
 
-The example traces in `test_traces/` can be used to test the package, running
+The example traces in `test_traces/` can be used to test the module, running
 ```bash
 python qfactor.py -f "./test_traces/"  -v "vacuum" -c "sidebands_50MHz"  -r "resonance"
 ```
-giving the calibration
+which will give the calibration
+
 ![laser calibration plot](./test_traces/calibration.png)
-the fitted Q-factor
+
+and the fitted Q-factor
+
 ![Q-factor plot](./test_traces/resonance_Q0.023e8.png)
