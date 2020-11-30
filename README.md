@@ -29,4 +29,4 @@ python qfactor.py -f "./test_traces/"  -v "vacuum" -c "sidebands_50MHz"  -r "res
 giving the calibration
 ![laser calibration plot](./test_traces/calibration.png)
 the fitted Q-factor
-![Q-factor plot](./test_traces/resonance Q0.023e8.png)
+![Q-factor plot](./test_traces/resonance_Q0.023e8.png)
