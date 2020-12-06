@@ -82,7 +82,7 @@ def make_guess_three_lorentzians(time, trace):
     """Make a guess for the fit parameteres based on the trace data"""
     # delta_f, background, amp_low, amp_0, amp_high, f0, linewidth
     guess = (np.ptp(time)/8, np.mean(trace), np.ptp(trace)/2, np.ptp(trace),
-             np.ptp(trace)/2, time[np.argmin(trace)], np.ptp(time)/20)
+             np.ptp(trace)/2, time[np.argmin(trace)], np.ptp(time)/10)
     bounds = ((           0,      0,      0,      0,       0, -np.inf,     0),
               (np.ptp(time), np.inf, np.inf, np.inf,  np.inf,  np.inf, np.inf))
     return guess, bounds
@@ -103,13 +103,20 @@ def calc_frequency_span_per_sec(scan_freq, peak_to_peak, scaling, calibration):
     """Calculate frequency span per second for the laser in MHz per second:
     scan_freq [Hz]
     peak_to_peak [Vpp]
-    scaling in [mA/V]
-    calibration [MHz/mA]"""
-    scan_period = 1/(2*scan_freq) #sec
+    scaling in [mA/V] or [V/V] (scanning current or piezo)
+    calibration [MHz/mA] or [MHz/V]"""
+    scan_period = 1/(2*scan_freq) # sec
     # (division by two because of triangle wave and hence in practice
     #  sweeping double the speed)
-    current_span = peak_to_peak*scaling #mA
-    return current_span*calibration/scan_period #MHz/second
+    parameter_span = peak_to_peak*scaling # mA or V
+    return parameter_span*calibration/scan_period # MHz/second
+
+def calc_calibration(span_per_sec, scan_freq, peak_to_peak, scaling):
+    scan_period = 1/(2*scan_freq) # sec
+    # (division by two because of triangle wave and hence in practice
+    #  sweeping double the speed)
+    parameter_span = peak_to_peak*scaling # mA or V
+    return scan_period*span_per_sec/parameter_span # MHz/A or MHz/V
 
 def fit_frequency_span_per_sec(fname_sidebands_trace, sidebands_freq,
                                PD_zero=None, showplt=True):
@@ -157,7 +164,7 @@ class QFactorMeasurement:
     freq_calibrated = False
 
     def __init__(self, folder="./", PD_zero=None, frequency_span_per_sec=None,
-                 acq_type='HRES'):
+                 acq_type='HRES', **kwargs):
         self.folder = folder
         self.acq_type = acq_type
         self.set_PD_zero(PD_zero)
@@ -184,7 +191,7 @@ class QFactorMeasurement:
                 print("(!) Warning no photodiode zero is set, minimum will be used.")
                 self.PD_zero = None
 
-    def set_frequency_span_per_sec(self, frequency_span_per_sec=None):
+    def set_frequency_span_per_sec(self, frequency_span_per_sec=None, sidebands_freq=None):
         """Set the time to frequency calibration by either
         * specifying a float for MHz swept per second;
         * using a string of a trace file where the first channel has a
@@ -204,8 +211,11 @@ class QFactorMeasurement:
             fname = self.acquire(" a trace with sidebands")
         if fname:
             fname = self.folder+fname
-            sidebands_freq = float(input("At what frequency are the sidebands? [MHz] "))
-            self.frequency_span_per_sec = fit_frequency_span_per_sec(fname, sidebands_freq)
+            if sidebands_freq is None:
+                self.sidebands_freq = float(input("At what frequency are the sidebands? [MHz] "))
+            else:
+                self.sidebands_freq = sidebands_freq
+            self.frequency_span_per_sec = fit_frequency_span_per_sec(fname, self.sidebands_freq)
         else:
             print(f"I could't work with the filename '{fname}', sorry")
 
