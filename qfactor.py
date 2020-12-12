@@ -9,6 +9,7 @@ Andreas Svela // 2019
 
 import os
 import sys
+import time
 import argparse
 import pandas as pd
 import numpy as np
@@ -231,7 +232,7 @@ class QFactorMeasurement:
                 scope = oscacq.Oscilloscope(_oscilloscope_visa_address)
             else:
                 scope = oscacq.Oscilloscope()
-            scope.set_options_get_trace_save(folder_and_fname, _filetype, acq_type=acq_type)
+            scope.set_options_get_trace_save(folder_and_fname, _filetype,  channel_nums=['1'], acq_type=acq_type)
             return fname
         else:
             return False
@@ -326,11 +327,14 @@ def main():
                               "or the filename of a trace with sidebands (will "
                               " ask for sideband frequency later), or leave "
                               "empty to acquire a trace with sidebands."))
+    parser.add_argument('-a', '--acquisition', type=str, default="HRES",
+                        help="Set the acquisition mode {'HRES', 'AVER{}', 'NORM'}")
     parser.add_argument('-f', '--folder', type=str, default="./",
                         help=("Select a folder if different from the folder "
                               "where the script is exectuted"))
     args = parser.parse_args()
     print("Hello! Let's get started with this measurement!")
+    time.sleep(0.5)
     # Test if float given instead of filename for calibration
     try:
         args.frequency_calibration = float(args.frequency_calibration)
@@ -340,7 +344,8 @@ def main():
         args.folder += "/"
     # Spawn class with the settings given
     qfm = QFactorMeasurement(folder=args.folder, PD_zero=args.vacuum_filename,
-                             frequency_span_per_sec=args.frequency_calibration)
+                             frequency_span_per_sec=args.frequency_calibration,
+                             acq_type=args.acquisition)
     # Check if filename was given
     if args.resonance_filename:
         qfm.read_and_calc_Q(args.resonance_filename)
