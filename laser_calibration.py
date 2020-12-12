@@ -49,8 +49,8 @@ def laser_calibration_finder(**kwargs):
     plots(df)
 
 def save(df):
-    timestamp = dt.datetime.now().strftime("%Y%m%d_%Hh%Mm%S")
-    df.to_csv(f"laser calibration {timestamp}.csv")
+    timestamp = dt.datetime.now().strftime("%y%m%d_%Hh%Mm%S")
+    df.to_csv(f"{timestamp} laser calibration.csv")
 
 def plots(df, scan_unit="V", common_scatter_plot=False):
     fscan_label = "Scan frequency [Hz]"
